@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  create-release:
+    name: Build and Create Tagged release
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Install archive tools
+        run: sudo apt install zip
+
+      - name: Checkout source code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 8.1.1
+
+      - name: Get variables
+        id: get_vars
+        run: |
+          echo '::set-output name=SHORT_SHA::$(git rev-parse --short HEAD)'
+          echo '::set-output name=DATE::$(date +'%D')'
+
+      - name: Bump manifest version
+        run: node .github/actions/bump-manifest-version.js
+        env:
+          TGT_RELEASE_VERSION: ${{ github.ref_name }}
+      
+      - name: Push manifest change
+        uses: EndBug/add-and-commit@v8
+        with:
+          add: fxmanifest.lua
+          push: true
+          author_name: Manifest Bumper
+          author_email: 41898282+github-actions[bot]@users.noreply.github.com
+          message: "chore: bump manifest version to ${{ github.ref_name }}"
+
+      - name: Check github.ref_name   
+        run: echo ${{ github.ref_name }}
+
+      - name: Update tag ref
+        uses: EndBug/latest-tag@latest
+        with:
+          tag-name: ${{ github.ref_name }}
+
+      - name: Bundle files
+        run: |
+          mkdir -p ./temp/iak_pipeline_inn
+          cp ./{README.md,fxmanifest.lua,interiorproxies.meta} ./temp/iak_pipeline_inn
+          cp -r ./{audio,stream} ./temp/iak_pipeline_inn
+          cd ./temp && zip -r ../iak_pipeline_inn.zip ./iak_pipeline_inn
+
+      - name: Create Release
+        uses: "marvinpinto/action-automatic-releases@v1.2.1"
+        id: auto_release
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          title: "${{ env.RELEASE_VERSION }}"
+          prerelease: false
+          files: iak_pipeline_inn.zip
+
+        env:
+          CI: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Get current date
+        if: inputs.releaseVersion == ''
+        id: date
+        uses: Kaven-Universe/github-action-current-date-time@v1
+        with:
+          format: "DD-MM-YYYY"
+
+      - name: Post announcement on Discord
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_USERNAME: "MaliBot"
+          DISCORD_AVATAR:  "https://i.imgur.com/FYYQGIF.png"
+          DISCORD_EMBEDS : '[{"title": "Iak Pipelin Inn[${{ github.ref_name }} - ${{ inputs.releaseVersion || steps.date.outputs.time }}]", "description": "**Changelog:**\n\n- ${{github.event.head_commit.message}}", "color": 13975696,"footer": {"text": "© Malibú Tech", "icon_url": "https://i.imgur.com/CebOcN3.png"},"image": {"url": "https://cdn.discordapp.com/attachments/1036244419881476106/1145738722147569684/Thumbnail_Youtube_Pipeline_INN.png"}}]'
+        uses: Ilshidur/action-discord@0.3.2
+        with: 
+          args: |
+            <@&897197423502450772>
