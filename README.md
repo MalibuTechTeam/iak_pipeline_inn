@@ -19,7 +19,7 @@ Pipeline Inn offers more than just a feast for the eyes. Step inside and treat y
 - Bathroom
 
 ### Media:
-- Showcase:  [Click Here](https://www.youtube.com/watch?v=TSCrxiJaWdg)
+- Showcase:  [Click Here](https://www.youtube.com/watch?v=W_S8sB92VWc)
 
 ## DMCA Protection Certificate
 ![image](https://cdn.discordapp.com/attachments/1045063739738705940/1141766708852437072/image.png)
