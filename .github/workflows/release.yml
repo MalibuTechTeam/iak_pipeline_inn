@@ -58,7 +58,7 @@ jobs:
         run: |
           mkdir -p ./temp/iak_pipeline_inn
           cp ./{README.md,fxmanifest.lua,interiorproxies.meta} ./temp/iak_pipeline_inn
-          cp -r ./{audio,stream} ./temp/iak_pipeline_inn
+          cp -r ./{core,audio,stream} ./temp/iak_pipeline_inn
           cd ./temp && zip -r ../iak_pipeline_inn.zip ./iak_pipeline_inn
 
       - name: Create Release
